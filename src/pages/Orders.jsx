@@ -38,6 +38,10 @@ const FabricCalculator = () => {
   const [stockData, setStockData] = useState([]);
   const [styleDetailsData, setStyleDetailsData] = useState([]);
   const [dataLoaded, setDataLoaded] = useState(false);
+  console.log(
+    'style details',
+    styleDetailsData.find((s) => s.styleNumber === 15038)
+  );
 
   // State for style numbers
   const [styleNumbers, setStyleNumbers] = useState([]);
@@ -223,6 +227,310 @@ const FabricCalculator = () => {
   };
 
   // Calculate fabric usage for all styles
+  // const calculateFabricUsage = async () => {
+  //   if (styleNumbers.length === 0) {
+  //     setError('Please add at least one style number');
+  //     return;
+  //   }
+
+  //   setCalculating(true);
+  //   setError('');
+  //   setProgress(0);
+
+  //   try {
+  //     const resultsArray = [];
+  //     let totalOrders = 0;
+  //     let totalFabricUsed = 0;
+  //     let stylesWithScans = 0;
+  //     let channelWiseCounts = {};
+
+  //     let filters = {};
+  //     if (useDateFilter && startDate) {
+  //       filters.startDate = startDate;
+  //       if (endDate) {
+  //         filters.endDate = endDate;
+  //       } else {
+  //         filters.date = startDate;
+  //       }
+  //     }
+
+  //     for (let i = 0; i < styleNumbers.length; i++) {
+  //       const styleNum = styleNumbers[i];
+  //       setProgress(((i + 1) / styleNumbers.length) * 100);
+
+  //       try {
+  //         const scanFilters = {
+  //           style_number: styleNum,
+  //           ...(filters.startDate && { startDate: filters.startDate }),
+  //           ...(filters.endDate && { endDate: filters.endDate }),
+  //           ...(filters.date && !filters.endDate && { date: filters.date }),
+  //         };
+
+  //         const scanResult = await fetchScanRecords(scanFilters);
+  //         let records = scanResult.records || [];
+
+  //         const production_orders = scanResult.records.filter(
+  //           (o) => o.status === PRODUCTION_STATUS
+  //         );
+
+  //         const inventory_found_orders = scanResult.records.filter(
+  //           (o) => o.status === INVENTORY_FOUND_STATUS
+  //         );
+
+  //         setInventoryFound(inventory_found_orders?.length);
+  //         setFoundOrders(inventory_found_orders);
+
+  //         records = production_orders.filter(
+  //           (record) => !UNWANTED_CHANNELS.includes(record.channel)
+  //         );
+
+  //         let totalFabricForStyle = 0;
+  //         let orderCount = records.length;
+  //         let sizeDistribution = {};
+  //         let channelDistribution = {};
+  //         let scanDetails = [];
+
+  //         const fabricDetailsForStyle = getFabricDetailsForStyle(styleNum);
+
+  //         const fabricGroups = {};
+
+  //         if (fabricDetailsForStyle.length > 0) {
+  //           fabricDetailsForStyle.forEach((fabric) => {
+  //             const fabricKey = String(fabric.fabricNumber);
+  //             fabricGroups[fabricKey] = {
+  //               fabricNumber: fabric.fabricNumber,
+  //               fabricName: fabric.fabricName,
+  //               availableStock: fabric.availableStock || 0,
+  //               location: fabric.location || 'N/A',
+  //               fabricSource: fabric.fabricSource || 'N/A',
+  //               blockedStockDays: fabric.blockedStockDays || 0,
+  //               totalFabric: 0,
+  //               orderCount: 0,
+  //               sizeDistribution: {},
+  //               channelDistribution: {},
+  //               fromStock: fabric.fromStock || false,
+  //             };
+  //           });
+  //         }
+
+  //         records.forEach((record) => {
+  //           const size = record.size || 'Unknown';
+  //           const channel = record.channel || 'Unknown';
+  //           const fabricUsage = parseFloat(record.scan_tracking_2s) || 0;
+
+  //           totalFabricForStyle += fabricUsage;
+
+  //           if (!sizeDistribution[size]) {
+  //             sizeDistribution[size] = 0;
+  //           }
+  //           sizeDistribution[size] += 1;
+
+  //           if (!UNWANTED_CHANNELS.includes(channel)) {
+  //             if (!channelDistribution[channel]) {
+  //               channelDistribution[channel] = 0;
+  //             }
+  //             channelDistribution[channel] += 1;
+  //           }
+
+  //           let fabricKey = 'Unknown';
+
+  //           if (fabricDetailsForStyle.length === 1) {
+  //             fabricKey = String(fabricDetailsForStyle[0].fabricNumber);
+  //           } else if (fabricDetailsForStyle.length > 1) {
+  //             const possibleFabricFields = [
+  //               'fabric_no',
+  //               'fabric_number',
+  //               'fabricNumber',
+  //               'fabric_id',
+  //               'fabricId',
+  //             ];
+  //             let foundFabric = false;
+
+  //             for (const field of possibleFabricFields) {
+  //               if (record[field] !== undefined && record[field] !== null && record[field] !== '') {
+  //                 const val = String(record[field]);
+  //                 const matchingFabric = fabricDetailsForStyle.find(
+  //                   (f) =>
+  //                     String(f.fabricNumber) === val ||
+  //                     String(f.fabricNumber).includes(val) ||
+  //                     val.includes(String(f.fabricNumber))
+  //                 );
+  //                 if (matchingFabric) {
+  //                   fabricKey = String(matchingFabric.fabricNumber);
+  //                   foundFabric = true;
+  //                   break;
+  //                 }
+  //               }
+  //             }
+
+  //             if (!foundFabric) {
+  //               const fabricKeys = Object.keys(fabricGroups);
+  //               const index = records.indexOf(record) % fabricKeys.length;
+  //               fabricKey = fabricKeys[index];
+  //             }
+  //           }
+
+  //           if (!fabricGroups[fabricKey]) {
+  //             const stockInfo = stockData.find(
+  //               (s) =>
+  //                 s.styleNumbers &&
+  //                 s.styleNumbers.includes(Number(styleNum)) &&
+  //                 s.fabricNumber &&
+  //                 String(s.fabricNumber) === fabricKey
+  //             );
+
+  //             fabricGroups[fabricKey] = {
+  //               fabricNumber: fabricKey,
+  //               fabricName: stockInfo?.fabricName || 'Unknown',
+  //               availableStock: stockInfo?.availableStock || 0,
+  //               location: stockInfo?.location || 'N/A',
+  //               fabricSource: stockInfo?.fabric_source || 'N/A',
+  //               blockedStockDays: stockInfo?.blocked_stock_days || 0,
+  //               totalFabric: 0,
+  //               orderCount: 0,
+  //               sizeDistribution: {},
+  //               channelDistribution: {},
+  //               fromStock: !!stockInfo,
+  //             };
+  //           }
+
+  //           fabricGroups[fabricKey].totalFabric += fabricUsage;
+  //           fabricGroups[fabricKey].orderCount += 1;
+
+  //           if (!fabricGroups[fabricKey].sizeDistribution[size]) {
+  //             fabricGroups[fabricKey].sizeDistribution[size] = 0;
+  //           }
+  //           fabricGroups[fabricKey].sizeDistribution[size] += 1;
+
+  //           if (!UNWANTED_CHANNELS.includes(channel)) {
+  //             if (!fabricGroups[fabricKey].channelDistribution[channel]) {
+  //               fabricGroups[fabricKey].channelDistribution[channel] = 0;
+  //             }
+  //             fabricGroups[fabricKey].channelDistribution[channel] += 1;
+  //           }
+
+  //           scanDetails.push({
+  //             orderId: record.order_id || 'N/A',
+  //             size: size,
+  //             channel: channel,
+  //             fabricUsed: fabricUsage,
+  //             fabricNumber: fabricKey,
+  //             fabricName: fabricGroups[fabricKey]?.fabricName || 'Unknown',
+  //             status: record.status || 'N/A',
+  //             createdAt: record.created_at || 'N/A',
+  //           });
+  //         });
+
+  //         Object.keys(channelDistribution).forEach((channel) => {
+  //           if (!UNWANTED_CHANNELS.includes(channel)) {
+  //             if (!channelWiseCounts[channel]) {
+  //               channelWiseCounts[channel] = 0;
+  //             }
+  //             channelWiseCounts[channel] += channelDistribution[channel];
+  //           }
+  //         });
+
+  //         const fabricDetails = Object.values(fabricGroups).map((group) => ({
+  //           fabricNumber: group.fabricNumber,
+  //           fabricName: group.fabricName,
+  //           availableStock: group.availableStock || 0,
+  //           location: group.location || 'N/A',
+  //           fabricSource: group.fabricSource || 'N/A',
+  //           blockedStockDays: group.blockedStockDays || 0,
+  //           usedInScans: group.totalFabric || 0,
+  //           ordersInScans: group.orderCount || 0,
+  //           sizeDistribution: group.sizeDistribution || {},
+  //           channelDistribution: group.channelDistribution || {},
+  //           fromStock: group.fromStock || false,
+  //         }));
+
+  //         const totalAvailableStock = fabricDetails.reduce(
+  //           (sum, f) => sum + (f.availableStock || 0),
+  //           0
+  //         );
+  //         const availableStock = Math.round(totalAvailableStock * 100) / 100;
+
+  //         const fabricSufficient = availableStock >= totalFabricForStyle;
+  //         const fabricDifference = Math.round((availableStock - totalFabricForStyle) * 100) / 100;
+
+  //         const result = {
+  //           styleNumber: styleNum,
+  //           orderCount,
+  //           totalFabricUsed: Math.round(totalFabricForStyle * 100) / 100,
+  //           sizeDistribution,
+  //           channelDistribution,
+  //           availableStock,
+  //           fabricDetails,
+  //           fabricSufficient,
+  //           fabricDifference,
+  //           scanDetails,
+  //           hasScans: records.length > 0,
+  //           status: stockData.some(
+  //             (s) =>
+  //               s.styleNumbers && s.styleNumbers.includes(Number(styleNum)) && s.status !== false
+  //           ),
+  //           fabricCount: fabricDetails.length,
+  //           dateFilterUsed: useDateFilter,
+  //           dateRange: useDateFilter
+  //             ? `${startDate}${endDate ? ` to ${endDate}` : ''}`
+  //             : 'All Time',
+  //           filteredChannels: UNWANTED_CHANNELS,
+  //         };
+
+  //         resultsArray.push(result);
+
+  //         totalOrders += orderCount;
+  //         totalFabricUsed += totalFabricForStyle;
+  //         if (records.length > 0) stylesWithScans++;
+  //       } catch (err) {
+  //         console.error(`Error processing style ${styleNum}:`, err);
+  //         resultsArray.push({
+  //           styleNumber: styleNum,
+  //           orderCount: 0,
+  //           totalFabricUsed: 0,
+  //           sizeDistribution: {},
+  //           channelDistribution: {},
+  //           availableStock: 0,
+  //           fabricDetails: [],
+  //           fabricSufficient: false,
+  //           fabricDifference: 0,
+  //           scanDetails: [],
+  //           hasScans: false,
+  //           status: true,
+  //           fabricCount: 0,
+  //           error: err.message,
+  //           dateFilterUsed: useDateFilter,
+  //           dateRange: useDateFilter
+  //             ? `${startDate}${endDate ? ` to ${endDate}` : ''}`
+  //             : 'All Time',
+  //           filteredChannels: UNWANTED_CHANNELS,
+  //         });
+  //       }
+  //     }
+
+  //     resultsArray.sort((a, b) => a.styleNumber - b.styleNumber);
+
+  //     setResults(resultsArray);
+  //     setFilteredResults(resultsArray);
+
+  //     setTotals({
+  //       totalStyles: resultsArray.length,
+  //       totalOrders,
+  //       totalFabricUsed: Math.round(totalFabricUsed * 100) / 100,
+  //       totalAvailableStock: resultsArray.reduce((sum, r) => sum + r.availableStock, 0),
+  //       stylesWithScans,
+  //       channelWiseCounts,
+  //     });
+
+  //     setProgress(100);
+  //   } catch (err) {
+  //     setError('Error calculating fabric usage: ' + err.message);
+  //   } finally {
+  //     setCalculating(false);
+  //   }
+  // };
+
+  // Toggle fabric expansion
   const calculateFabricUsage = async () => {
     if (styleNumbers.length === 0) {
       setError('Please add at least one style number');
@@ -232,6 +540,40 @@ const FabricCalculator = () => {
     setCalculating(true);
     setError('');
     setProgress(0);
+
+    // --- Size string -> average-bucket key ---
+    // ⚠️ Apne actual record.size values (e.g. "S", "M", "XL"...) ke hisaab se adjust karo
+    const SIZE_GROUP_MAP = {
+      xxs: 'average_xxs_xs',
+      xs: 'average_xxs_xs',
+      s: 'average_s_m',
+      m: 'average_s_m',
+      l: 'average_l_xl',
+      xl: 'average_l_xl',
+      '2xl': 'average_2xl_3xl',
+      '3xl': 'average_2xl_3xl',
+      '4xl': 'average_4xl_5xl',
+      '5xl': 'average_4xl_5xl',
+    };
+
+    const getSizeGroupKey = (size) => {
+      if (!size) return null;
+      const normalized = String(size).toLowerCase().replace(/\s+/g, '');
+      return SIZE_GROUP_MAP[normalized] || null;
+    };
+
+    // styleDetails.fabrics (fabric_no/name) ko fabricAvgDetails[0].fabrics
+    // (size-wise averages) ke saath index-zip karta hai
+    const buildStyleFabricList = (styleDetails) => {
+      const fabricInfo = styleDetails?.fabrics || [];
+      const avgInfo = styleDetails?.fabricAvgDetails?.[0]?.fabrics || [];
+
+      return fabricInfo.map((fabric, idx) => ({
+        fabricNumber: fabric.fabric_no,
+        fabricName: fabric.fabric_name,
+        averages: avgInfo[idx] || null,
+      }));
+    };
 
     try {
       const resultsArray = [];
@@ -265,13 +607,9 @@ const FabricCalculator = () => {
           const scanResult = await fetchScanRecords(scanFilters);
           let records = scanResult.records || [];
 
-          const production_orders = scanResult.records.filter(
-            (o) => o.status === PRODUCTION_STATUS
-          );
+          const production_orders = records.filter((o) => o.status === PRODUCTION_STATUS);
 
-          const inventory_found_orders = scanResult.records.filter(
-            (o) => o.status === INVENTORY_FOUND_STATUS
-          );
+          const inventory_found_orders = records.filter((o) => o.status === INVENTORY_FOUND_STATUS);
 
           setInventoryFound(inventory_found_orders?.length);
           setFoundOrders(inventory_found_orders);
@@ -280,165 +618,102 @@ const FabricCalculator = () => {
             (record) => !UNWANTED_CHANNELS.includes(record.channel)
           );
 
+          // --- Style + fabric average data ---
+          const styleDetails = styleDetailsData.find((s) => s.styleNumber === styleNum);
+          const styleFabrics = buildStyleFabricList(styleDetails);
+          const stockList = getFabricDetailsForStyle(styleNum); // stock/location info
+
+          const fabricGroups = {};
+          styleFabrics.forEach((f) => {
+            const fabricKey = String(f.fabricNumber);
+            const stockInfo = stockList.find((s) => String(s.fabricNumber) === fabricKey);
+            fabricGroups[fabricKey] = {
+              fabricNumber: f.fabricNumber,
+              fabricName: f.fabricName,
+              averages: f.averages,
+              availableStock: stockInfo?.availableStock || 0,
+              location: stockInfo?.location || 'N/A',
+              fabricSource: stockInfo?.fabricSource || 'N/A',
+              blockedStockDays: stockInfo?.blockedStockDays || 0,
+              totalFabric: 0,
+              orderCount: 0,
+              sizeDistribution: {},
+              channelDistribution: {},
+            };
+          });
+
           let totalFabricForStyle = 0;
           let orderCount = records.length;
           let sizeDistribution = {};
           let channelDistribution = {};
           let scanDetails = [];
 
-          const fabricDetailsForStyle = getFabricDetailsForStyle(styleNum);
-
-          const fabricGroups = {};
-
-          if (fabricDetailsForStyle.length > 0) {
-            fabricDetailsForStyle.forEach((fabric) => {
-              const fabricKey = String(fabric.fabricNumber);
-              fabricGroups[fabricKey] = {
-                fabricNumber: fabric.fabricNumber,
-                fabricName: fabric.fabricName,
-                availableStock: fabric.availableStock || 0,
-                location: fabric.location || 'N/A',
-                fabricSource: fabric.fabricSource || 'N/A',
-                blockedStockDays: fabric.blockedStockDays || 0,
-                totalFabric: 0,
-                orderCount: 0,
-                sizeDistribution: {},
-                channelDistribution: {},
-                fromStock: fabric.fromStock || false,
-              };
-            });
-          }
-
           records.forEach((record) => {
             const size = record.size || 'Unknown';
             const channel = record.channel || 'Unknown';
-            const fabricUsage = parseFloat(record.scan_tracking_2s) || 0;
+            const sizeGroupKey = getSizeGroupKey(size);
 
-            totalFabricForStyle += fabricUsage;
-
-            if (!sizeDistribution[size]) {
-              sizeDistribution[size] = 0;
-            }
-            sizeDistribution[size] += 1;
-
+            sizeDistribution[size] = (sizeDistribution[size] || 0) + 1;
             if (!UNWANTED_CHANNELS.includes(channel)) {
-              if (!channelDistribution[channel]) {
-                channelDistribution[channel] = 0;
-              }
-              channelDistribution[channel] += 1;
+              channelDistribution[channel] = (channelDistribution[channel] || 0) + 1;
             }
 
-            let fabricKey = 'Unknown';
+            // Order style ke SAB fabrics ek saath consume karta hai
+            // (main + lining etc.), apne apne size-average ke hisaab se
+            const perFabricUsage = [];
+            Object.values(fabricGroups).forEach((group) => {
+              const usage = sizeGroupKey && group.averages ? group.averages[sizeGroupKey] || 0 : 0;
 
-            if (fabricDetailsForStyle.length === 1) {
-              fabricKey = String(fabricDetailsForStyle[0].fabricNumber);
-            } else if (fabricDetailsForStyle.length > 1) {
-              const possibleFabricFields = [
-                'fabric_no',
-                'fabric_number',
-                'fabricNumber',
-                'fabric_id',
-                'fabricId',
-              ];
-              let foundFabric = false;
+              group.totalFabric += usage;
+              group.orderCount += 1;
+              totalFabricForStyle += usage;
 
-              for (const field of possibleFabricFields) {
-                if (record[field] !== undefined && record[field] !== null && record[field] !== '') {
-                  const val = String(record[field]);
-                  const matchingFabric = fabricDetailsForStyle.find(
-                    (f) =>
-                      String(f.fabricNumber) === val ||
-                      String(f.fabricNumber).includes(val) ||
-                      val.includes(String(f.fabricNumber))
-                  );
-                  if (matchingFabric) {
-                    fabricKey = String(matchingFabric.fabricNumber);
-                    foundFabric = true;
-                    break;
-                  }
-                }
+              group.sizeDistribution[size] = (group.sizeDistribution[size] || 0) + 1;
+              if (!UNWANTED_CHANNELS.includes(channel)) {
+                group.channelDistribution[channel] = (group.channelDistribution[channel] || 0) + 1;
               }
 
-              if (!foundFabric) {
-                const fabricKeys = Object.keys(fabricGroups);
-                const index = records.indexOf(record) % fabricKeys.length;
-                fabricKey = fabricKeys[index];
-              }
-            }
-
-            if (!fabricGroups[fabricKey]) {
-              const stockInfo = stockData.find(
-                (s) =>
-                  s.styleNumbers &&
-                  s.styleNumbers.includes(Number(styleNum)) &&
-                  s.fabricNumber &&
-                  String(s.fabricNumber) === fabricKey
-              );
-
-              fabricGroups[fabricKey] = {
-                fabricNumber: fabricKey,
-                fabricName: stockInfo?.fabricName || 'Unknown',
-                availableStock: stockInfo?.availableStock || 0,
-                location: stockInfo?.location || 'N/A',
-                fabricSource: stockInfo?.fabric_source || 'N/A',
-                blockedStockDays: stockInfo?.blocked_stock_days || 0,
-                totalFabric: 0,
-                orderCount: 0,
-                sizeDistribution: {},
-                channelDistribution: {},
-                fromStock: !!stockInfo,
-              };
-            }
-
-            fabricGroups[fabricKey].totalFabric += fabricUsage;
-            fabricGroups[fabricKey].orderCount += 1;
-
-            if (!fabricGroups[fabricKey].sizeDistribution[size]) {
-              fabricGroups[fabricKey].sizeDistribution[size] = 0;
-            }
-            fabricGroups[fabricKey].sizeDistribution[size] += 1;
-
-            if (!UNWANTED_CHANNELS.includes(channel)) {
-              if (!fabricGroups[fabricKey].channelDistribution[channel]) {
-                fabricGroups[fabricKey].channelDistribution[channel] = 0;
-              }
-              fabricGroups[fabricKey].channelDistribution[channel] += 1;
-            }
+              perFabricUsage.push({ fabricNumber: group.fabricNumber, used: usage });
+            });
 
             scanDetails.push({
               orderId: record.order_id || 'N/A',
-              size: size,
-              channel: channel,
-              fabricUsed: fabricUsage,
-              fabricNumber: fabricKey,
-              fabricName: fabricGroups[fabricKey]?.fabricName || 'Unknown',
+              size,
+              channel,
               status: record.status || 'N/A',
               createdAt: record.created_at || 'N/A',
+              fabricUsage: perFabricUsage,
+              fabricUsed: perFabricUsage.reduce((sum, f) => sum + (f.used || 0), 0),
+              fabricBreakdown: perFabricUsage,
             });
           });
 
           Object.keys(channelDistribution).forEach((channel) => {
             if (!UNWANTED_CHANNELS.includes(channel)) {
-              if (!channelWiseCounts[channel]) {
-                channelWiseCounts[channel] = 0;
-              }
-              channelWiseCounts[channel] += channelDistribution[channel];
+              channelWiseCounts[channel] =
+                (channelWiseCounts[channel] || 0) + channelDistribution[channel];
             }
           });
 
-          const fabricDetails = Object.values(fabricGroups).map((group) => ({
-            fabricNumber: group.fabricNumber,
-            fabricName: group.fabricName,
-            availableStock: group.availableStock || 0,
-            location: group.location || 'N/A',
-            fabricSource: group.fabricSource || 'N/A',
-            blockedStockDays: group.blockedStockDays || 0,
-            usedInScans: group.totalFabric || 0,
-            ordersInScans: group.orderCount || 0,
-            sizeDistribution: group.sizeDistribution || {},
-            channelDistribution: group.channelDistribution || {},
-            fromStock: group.fromStock || false,
-          }));
+          // Per-fabric details + per-fabric sufficiency check
+          const fabricDetails = Object.values(fabricGroups).map((group) => {
+            const availableStock = Math.round((group.availableStock || 0) * 100) / 100;
+            const usedInScans = Math.round((group.totalFabric || 0) * 100) / 100;
+            return {
+              fabricNumber: group.fabricNumber,
+              fabricName: group.fabricName,
+              availableStock,
+              location: group.location,
+              fabricSource: group.fabricSource,
+              blockedStockDays: group.blockedStockDays,
+              usedInScans,
+              ordersInScans: group.orderCount,
+              sizeDistribution: group.sizeDistribution,
+              channelDistribution: group.channelDistribution,
+              fabricSufficient: availableStock >= usedInScans,
+              fabricDifference: Math.round((availableStock - usedInScans) * 100) / 100,
+            };
+          });
 
           const totalAvailableStock = fabricDetails.reduce(
             (sum, f) => sum + (f.availableStock || 0),
@@ -446,8 +721,13 @@ const FabricCalculator = () => {
           );
           const availableStock = Math.round(totalAvailableStock * 100) / 100;
 
-          const fabricSufficient = availableStock >= totalFabricForStyle;
-          const fabricDifference = Math.round((availableStock - totalFabricForStyle) * 100) / 100;
+          // Style overall sufficient sirf tab jab HAR fabric individually sufficient ho
+          const fabricSufficient =
+            fabricDetails.length > 0 && fabricDetails.every((f) => f.fabricSufficient);
+          const fabricDifference =
+            fabricDetails.length > 0
+              ? Math.min(...fabricDetails.map((f) => f.fabricDifference))
+              : 0;
 
           const result = {
             styleNumber: styleNum,
@@ -526,7 +806,6 @@ const FabricCalculator = () => {
     }
   };
 
-  // Toggle fabric expansion
   const toggleFabricExpand = (fabricNumber) => {
     if (expandedFabric === fabricNumber) {
       setExpandedFabric(null);
