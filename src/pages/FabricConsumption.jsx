@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { ProductStyleImages } from 'react-product-style-images';
 import {
   Search,
   Loader2,
@@ -29,6 +30,7 @@ import {
   PRODUCTION_STATUS,
   INVENTORY_FOUND_STATUS,
 } from '../constants/index.js';
+import ProductPage from '../components/ProductPage.jsx';
 
 // API Endpoints
 const STOCK_API = `${BASE_URL}/stock`;
@@ -75,6 +77,8 @@ const FabricStockTracker = () => {
   const [calculating, setCalculating] = useState(false);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
+  const [toggle, setToggle] = useState(false);
+  const [styleNumber, setStyleNumber] = useState('');
 
   useEffect(() => {
     loadInitialData();
@@ -318,7 +322,7 @@ const FabricStockTracker = () => {
       'Total Production Orders',
       'Inventory Found Orders',
       'Total Consumption (m)',
-      'Last Purchase Remaining Stock (m)',
+      // 'Last Purchase Remaining Stock (m)',
       'Current Stock (m)',
       'Styles Count',
     ];
@@ -335,7 +339,7 @@ const FabricStockTracker = () => {
           row.totalProductionOrders,
           row.totalInventoryFoundOrders,
           row.totalConsumption,
-          row.remainingStock,
+          // row.remainingStock,
           row.currentStockOnRecord,
           row.styleCount,
         ].join(',')
@@ -375,7 +379,7 @@ const FabricStockTracker = () => {
           'Prod. Orders',
           'Inv. Found',
           'Consumption (m)',
-          'Last Purchase Remaining Stock (m)',
+          // 'Last Purchase Remaining Stock (m)',
           'Current Stock (m)',
         ],
       ],
@@ -388,7 +392,7 @@ const FabricStockTracker = () => {
         row.totalProductionOrders,
         row.totalInventoryFoundOrders,
         row.totalConsumption,
-        row.remainingStock,
+        // row.remainingStock,
         row.currentStockOnRecord,
       ]),
       styles: { fontSize: 8 },
@@ -409,6 +413,10 @@ const FabricStockTracker = () => {
         </div>
       </div>
     );
+  }
+
+  if (toggle) {
+    return <ProductPage styleNumber={styleNumber} setToggle={setToggle} />;
   }
 
   return (
@@ -660,7 +668,7 @@ const FabricStockTracker = () => {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-3">
                           <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
                             <p className="text-xs text-slate-500 font-medium">Purchase Qty</p>
                             <p className="text-sm font-bold text-slate-900 mt-0.5">
@@ -685,7 +693,7 @@ const FabricStockTracker = () => {
                               {entry.totalConsumption.toFixed(2)}m
                             </p>
                           </div>
-                          <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                          {/* <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
                             <p className="text-xs text-slate-500 font-medium">
                               Last Purchase Remaining Stock
                             </p>
@@ -694,7 +702,7 @@ const FabricStockTracker = () => {
                             >
                               {entry.remainingStock.toFixed(2)}m
                             </p>
-                          </div>
+                          </div> */}
                           <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
                             <p className="text-xs text-slate-500 font-medium">Current Stock</p>
                             <p className="text-sm font-bold text-emerald-600 mt-0.5">
@@ -722,24 +730,44 @@ const FabricStockTracker = () => {
                                     onClick={() => toggleStyleExpand(key)}
                                   >
                                     <div className="flex flex-wrap items-center gap-2 text-xs">
-                                      <span className="font-semibold text-slate-900">
-                                        Style #{style.styleNumber}
-                                      </span>
-                                      <span className="inline-flex items-center gap-1 text-blue-600">
-                                        <Package size={12} />
-                                        {style.productionOrders} prod. orders
-                                      </span>
-                                      <span className="text-amber-600">
-                                        {style.inventoryFoundOrders} inv. found
-                                      </span>
-                                      <span className="inline-flex items-center gap-1 text-indigo-600 font-medium">
-                                        <TrendingDown size={12} />
-                                        {style.consumption.toFixed(2)}m used
-                                      </span>
-                                      {style.error && (
-                                        <span className="text-rose-500">Error: {style.error}</span>
-                                      )}
+                                      <div>
+                                        <span className="font-semibold text-slate-900">
+                                          Style #{style.styleNumber}
+                                        </span>
+
+                                        <span className="inline-flex items-center gap-1 text-blue-600">
+                                          <Package size={12} />
+                                          {style.productionOrders} prod. orders
+                                        </span>
+                                        <span className="text-amber-600">
+                                          {style.inventoryFoundOrders} inv. found
+                                        </span>
+                                        <span className="inline-flex items-center gap-1 text-indigo-600 font-medium">
+                                          <TrendingDown size={12} />
+                                          {style.consumption.toFixed(2)}m used
+                                        </span>
+                                        {style.error && (
+                                          <span className="text-rose-500">
+                                            Error: {style.error}
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      <div
+                                        onClick={() => {
+                                          setToggle((prev) => !prev);
+                                          setStyleNumber(style.styleNumber);
+                                        }}
+                                      >
+                                        <ProductStyleImages
+                                          styleNumbers={[style.styleNumber]}
+                                          imageCount="1"
+                                          width="200px"
+                                          height="200px"
+                                        />
+                                      </div>
                                     </div>
+
                                     {expandedStyle === key ? (
                                       <ChevronUp size={14} className="text-slate-400" />
                                     ) : (

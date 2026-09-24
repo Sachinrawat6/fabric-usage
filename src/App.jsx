@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import FabricStockTracker from './pages/FabricConsumption';
 import StyleRecords from './pages/Orders';
 import Sidebar from './components/Sidebar';
+import ProductPage from './components/ProductPage';
 
 const App = () => {
   return (
@@ -12,6 +13,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<FabricStockTracker />} />
             <Route path="/by-stylenumbers" element={<StyleRecords />} />
+            <Route path="/image" element={<ProductPage />} />
           </Routes>
         </main>
       </div>
